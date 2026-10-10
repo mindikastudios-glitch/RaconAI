@@ -1140,6 +1140,7 @@ async function enviar(texto, textoApi, esReintento = false) {
 // ---------- 4. ★ AQUÍ SE CONECTARÁ LA API ----------
 // Usa AbortController para poder detener la respuesta en curso.
 
+
 async function obtenerRespuesta(textoUsuario, historial = []) {
   abortActual = new AbortController();
 
@@ -1169,7 +1170,8 @@ async function obtenerRespuesta(textoUsuario, historial = []) {
   } finally {
     abortActual = null;
   }
-    }
+}
+    
     
 
 // ---------- 5. INTERFAZ ----------
