@@ -1139,26 +1139,38 @@ async function enviar(texto, textoApi, esReintento = false) {
 
 // ---------- 4. ★ AQUÍ SE CONECTARÁ LA API ----------
 // Usa AbortController para poder detener la respuesta en curso.
-async function obtenerRespuesta(textoUsuario) {
+
+async function obtenerRespuesta(textoUsuario, historial = []) {
   abortActual = new AbortController();
+
   try {
     const respuesta = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mensaje: textoUsuario }),
+      body: JSON.stringify({
+        mensaje: textoUsuario,
+        historial: historial.slice(-20)
+      }),
       signal: abortActual.signal
     });
+
     const datos = await respuesta.json();
-    if (!respuesta.ok) throw new Error(datos.error || "No se pudo obtener una respuesta.");
+
+    if (!respuesta.ok) {
+      throw new Error(datos.error || "No se pudo obtener una respuesta.");
+    }
+
     return datos.respuesta || "No recibí una respuesta.";
   } catch (error) {
     if (error.name === "AbortError") return null;
+
     console.error("Error de RaconAI:", error);
     return "No pude conectarme con la IA en este momento. Revisá la configuración de la conexión.";
   } finally {
     abortActual = null;
   }
-}
+    }
+    
 
 // ---------- 5. INTERFAZ ----------
 function autoAjustar() {
