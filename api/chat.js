@@ -14,13 +14,39 @@ module.exports = async (req, res) => {
     });
   }
 
-  const mensaje = req.body?.mensaje;
+  const { mensaje, historial } = req.body || {};
 
   if (typeof mensaje !== "string" || !mensaje.trim()) {
     return res.status(400).json({
       error: "El mensaje está vacío"
     });
   }
+
+  const messages = [
+    {
+      role: "system",
+      content: `Sos RaconAI, un asistente virtual desarrollado por Mindika Studios, basado en la arquitectura Racony.
+
+Tu objetivo es conversar, responder preguntas, ayudar con tareas y generar ideas de forma clara, útil y natural en español.
+
+Usá español rioplatense y voseo cuando corresponda. Tené en cuenta los mensajes anteriores de esta conversación y recordá los datos que el usuario haya compartido dentro del historial disponible. No inventes información. Si te preguntan qué tecnología utilizás, respondé con honestidad.`
+    },
+    ...(Array.isArray(historial) ? historial : [])
+      .filter(m =>
+        m &&
+        ["user", "assistant"].includes(m.role) &&
+        typeof m.content === "string"
+      )
+      .slice(-20)
+      .map(m => ({
+        role: m.role,
+        content: m.content.slice(0, 6000)
+      })),
+    {
+      role: "user",
+      content: mensaje.slice(0, 20000)
+    }
+  ];
 
   try {
     const respuestaGroq = await fetch(
@@ -33,22 +59,7 @@ module.exports = async (req, res) => {
         },
         body: JSON.stringify({
           model: "openai/gpt-oss-120b",
-          messages: [
-            {
-              role: "system",
-              content: `Sos RaconAI, un asistente virtual desarrollado por Mindika Studios, basado en la arquitectura Racony.
-
-Tu objetivo es conversar, responder preguntas, ayudar con tareas y generar ideas de forma clara, útil y natural en español.
-
-Usá español rioplatense y voseo cuando corresponda. Adaptá las explicaciones a lo que necesita el usuario. No inventes información y reconocé cuando no sepas algo.
-
-Tu identidad es RaconAI. Si te preguntan qué tecnología utilizás, respondé con honestidad.`
-            },
-            {
-              role: "user",
-              content: mensaje
-            }
-          ],
+          messages,
           max_completion_tokens: 2000
         })
       }
@@ -59,15 +70,16 @@ Tu identidad es RaconAI. Si te preguntan qué tecnología utilizás, respondé c
     if (!respuestaGroq.ok) {
       console.error("Error de Groq:", datos);
       return res.status(502).json({
-        error: "Groq no pudo generar la respuesta. Revisá el modelo y los límites de la API."
+        error: "Groq no pudo generar la respuesta."
       });
     }
 
-    const respuesta = datos.choices?.[0]?.message?.content;
-
     return res.status(200).json({
-      respuesta: respuesta || "No recibí una respuesta de la IA."
+      respuesta:
+        datos.choices?.[0]?.message?.content ||
+        "No recibí una respuesta de la IA."
     });
+
   } catch (error) {
     console.error("Error en /api/chat:", error);
 
@@ -76,4 +88,4 @@ Tu identidad es RaconAI. Si te preguntan qué tecnología utilizás, respondé c
     });
   }
 };
-          
+  
