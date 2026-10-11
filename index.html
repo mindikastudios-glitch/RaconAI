@@ -1111,7 +1111,12 @@ async function enviar(texto, textoApi, esReintento = false) {
       "\". Usá este contenido si la pregunta se refiere al documento.]\n" +
       pdfAdjunto.texto.slice(0, MAX_PDF_CHARS);
   }
-  const respuesta = await obtenerRespuesta(aEnviar);
+  const historial = actual.mensajes.slice(0, -1).map(m => ({
+  role: m.rol === "ai" ? "assistant" : "user",
+  content: m.texto
+}));
+
+const respuesta = await obtenerRespuesta(aEnviar, historial);
   generando = false;
   sendBtn.disabled = !input.value.trim();
 
