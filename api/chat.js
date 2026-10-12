@@ -66,7 +66,6 @@ Cuando la pregunta requiera información actualizada, noticias recientes o inves
     { type: "browser_search" }
   ],
   tool_choice: "auto",
-  citation_options: "enabled",
   max_completion_tokens: 2000
 })
       }
