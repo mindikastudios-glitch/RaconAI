@@ -58,10 +58,15 @@ Usá español neutro y voseo cuando corresponda. Tené en cuenta los mensajes an
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          messages,
-          max_completion_tokens: 2000
-        })
+  model: "openai/gpt-oss-120b",
+  messages,
+  tools: [
+    { type: "browser_search" }
+  ],
+  tool_choice: "auto",
+  citation_options: "enabled",
+  max_completion_tokens: 2000
+})
       }
     );
 
