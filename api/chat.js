@@ -74,10 +74,31 @@ Cuando necesites información actualizada o investigar en internet, utilizá la 
     const datos = await respuestaGroq.json();
 
     if (!respuestaGroq.ok) {
-      console.error("Error de Groq:", datos);
-      return res.status(502).json({
-        error: "Groq no pudo generar la respuesta."
-      });
+  console.error("Error de Groq:", datos);
+
+  const error = datos.error || {};
+  const mensajeError = error.message || "";
+
+  if (
+    error.code === "rate_limit_exceeded" ||
+    error.type === "tokens"
+  ) {
+    const coincidencia = mensajeError.match(
+      /try again in ([^.]+)/
+    );
+
+    const espera = coincidencia
+      ? coincidencia[1]
+      : "unos minutos";
+
+    return res.status(429).json({
+      error: `RaconAI alcanzó temporalmente el límite de uso. Probá de nuevo en aproximadamente ${espera}.`
+    });
+  }
+
+  return res.status(502).json({
+    error: "Groq no pudo generar la respuesta."
+  });
     }
 
     return res.status(200).json({
