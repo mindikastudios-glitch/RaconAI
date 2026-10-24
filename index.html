@@ -225,22 +225,28 @@ const TONES=[{id:'default',name:'Predeterminado',icon:'msg',desc:'Estilo natural
  {id:'eff',name:'Eficiente',icon:'zap',desc:'Respuestas directas, concisas y prácticas.',inst:'Responde de forma directa, concisa y práctica; omite explicaciones innecesarias pero conserva los detalles imprescindibles.'},
  {id:'clin',name:'Clínico',icon:'clip2',desc:'Objetivo, estructurado y neutral, como un informe técnico.',inst:'Usa un estilo objetivo, estructurado y neutral, como un informe técnico; evita exageraciones y lenguaje emocional. Solo cambia el estilo: no actúes como profesional sanitario.'},
  {id:'rom',name:'Romantizador',icon:'feather',desc:'Cálido, poético y evocador, con metáforas.',inst:'Usa un estilo cálido, poético y evocador con metáforas cuando resulte apropiado, sin inventar hechos ni perder claridad en temas técnicos, académicos o de seguridad.'}];
-const AIService={async reply({model,context}){
- const system=[
-  `Eres ${nick()}, el asistente de RaconAI Pro. Responde de forma útil, clara y honesta.`,
-  'Responde en el idioma del usuario. No inventes hechos ni afirmes haber realizado acciones que no hiciste.',
-  ...(context.style||[]),
-  context.memories&&context.memories.length?`Recuerdos relevantes del usuario (úsalos solo si ayudan):\n${context.memories.map(x=>'- '+x).join('\n')}`:''
- ].filter(Boolean).join('\n\n');
- const messages=[{role:'system',content:system},...(context.messages||[])];
- const response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
- let data;
- try{data=await response.json()}catch{throw new Error('La API devolvió una respuesta no válida')}
- if(!response.ok)throw new Error(data?.error?.message||data?.error||`Error HTTP ${response.status}`);
- const answer=data?.choices?.[0]?.message?.content;
- if(typeof answer!=='string'||!answer.trim())throw new Error('La API no devolvió texto');
- return answer.trim();
-}};
+const AIService = {
+  async reply({ model, context }) {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messages: context
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Error al conectar con la IA');
+    }
+
+    return data.choices?.[0]?.message?.content
+      || 'No recibí una respuesta de la IA.';
+  }
+};
 /* Persistencia */
 const Store={
  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},
